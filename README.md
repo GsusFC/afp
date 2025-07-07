@@ -57,6 +57,22 @@ The plugin uses:
 - **Pure HTML/CSS/JavaScript** (no build process required)
 - **Backend integration** for professional animation processing
 
+### Available Scripts
+
+```bash
+npm run build      # No build needed - explains this is pure HTML/CSS/JS
+npm run dev        # Shows development instructions
+npm run validate   # Validates plugin files and structure
+npm run package    # Creates distribution package in dist/
+```
+
+### Development Setup
+
+1. Clone the repository
+2. The plugin is ready to use - no build process needed
+3. Import `figma-plugin/manifest.json` in Figma
+4. Use `npm run validate` to check everything is working
+
 ## Technical Details
 
 - **Image Format**: Frames exported as JPEG (80% quality) for optimal file size

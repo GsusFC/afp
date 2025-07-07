@@ -1,0 +1,36 @@
+{
+  "name": "animagen-figma-plugin",
+  "version": "1.0.0",
+  "description": "A professional Figma plugin for exporting frames and generating animated GIFs, MP4s, and WebM videos",
+  "main": "figma-plugin/code.js",
+  "scripts": {
+    "build": "echo 'No build process needed - this is a pure HTML/CSS/JS Figma plugin'",
+    "dev": "echo 'Plugin development: Import manifest.json in Figma > Plugins > Development'",
+    "validate": "node scripts/validate-plugin.js",
+    "package": "node scripts/package-plugin.js"
+  },
+  "keywords": [
+    "figma",
+    "plugin",
+    "animation",
+    "gif",
+    "mp4",
+    "webm",
+    "frames",
+    "export"
+  ],
+  "author": "GsusFC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GsusFC/afp.git"
+  },
+  "devDependencies": {
+    "figma-plugin-helpers": "^0.15.2"
+  },
+  "figma": {
+    "manifest": "figma-plugin/manifest.json",
+    "ui": "figma-plugin/ui.html",
+    "main": "figma-plugin/code.js"
+  }
+}
