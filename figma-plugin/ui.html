@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AnimaGen Plugin</title>
+  <link rel="stylesheet" href="https://unpkg.com/figma-plugin-ds/dist/figma-plugin-ds.css" />
+  <style>
+    /* Minimal overrides for space optimization - preserving Figma Plugin DS */
+    body {
+      margin: 0;
+      padding: 12px;
+      height: 100vh;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    
+    /* Remove any custom button overrides that might interfere */
+    .button {
+      cursor: pointer;
+      transition: none; /* Remove transitions not present in Figma */
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      gap: 4px;
+      overflow: hidden; /* Asegura que no haya scroll en el contenedor principal */
+    }
+    
+    .header {
+      flex-shrink: 0;
+      margin-bottom: 0;
+    }
+    
+    .controls {
+      flex-shrink: 0;
+    }
+    
+    .process-steps {
+      margin-top: 16px;
+      padding: 12px;
+      background: var(--grey);
+      border-radius: var(--border-radius-large);
+      border: 1px solid var(--silver);
+    }
+    
+    .process-step {
+      margin-bottom: 8px;
+    }
+    
+    .process-step:last-child {
+      margin-bottom: 0;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: var(--silver);
+      border-radius: 2px;
+      margin: 12px 0 8px 0;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: var(--blue);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+    
+    .frame-list {
+      flex: 1;
+      border: 1px solid var(--silver);
+      border-radius: var(--border-radius-large);
+      padding: 8px;
+      background: var(--white);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      position: relative;
+      overflow: hidden; /* Previene cualquier scroll en este contenedor */
+    }
+    
+    .frame-header {
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--silver);
+      flex-shrink: 0;
+    }
+    
+    .frames-container {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      margin-bottom: 0;
+      padding-bottom: 70px; /* Espacio para el botón fijo */
+      min-height: 0; /* Permite que el flex funcione correctamente */
+    }
+    
+    /* Usar clases de spacing de Figma */
+    
+    .generate-section {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 12px 8px;
+      border-top: 2px solid var(--silver);
+      text-align: center;
+      background: var(--white);
+    }
+    
+    .generate-btn {
+      width: 100%;
+      padding: 16px 16px;
+      font-size: 14px;
+      justify-content: center;
+    }
+    
+    .preview-area {
+      background: var(--grey);
+      border: 1px solid var(--silver);
+      border-radius: var(--border-radius-large);
+      padding: 12px;
+      margin-top: 8px;
+    }
+    
+    .preview-container {
+      text-align: center;
+      background: var(--white);
+      border: 1px solid var(--silver);
+      border-radius: var(--border-radius-large);
+      padding: 12px;
+      min-height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--figma-color-border);
+    }
+    
+    .frame-item {
+      padding: 10px;
+      background: var(--grey);
+      border-radius: var(--border-radius-large);
+      margin-bottom: 8px;
+      border: 1px solid var(--silver);
+    }
+    
+    .frame-preview {
+      width: 48px;
+      height: 48px;
+      border-radius: 4px;
+      object-fit: cover;
+    }
+    
+    /* Usar clases flexbox oficiales de Figma */
+    
+    /* Small control buttons styling */
+    .control-btn-small {
+      min-width: 20px !important;
+      height: 20px !important;
+      padding: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-size: 12px !important;
+      line-height: 1 !important;
+      border-radius: 3px !important;
+    }
+    
+    /* Professional slider styling */
+    .time-slider {
+      width: 120px;
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--silver);
+      border-radius: 2px;
+      outline: none;
+    }
+    
+    .time-slider:hover {
+      background: var(--black3);
+    }
+    
+    .time-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--blue);
+      cursor: pointer;
+      box-shadow: none;
+    }
+    
+    .time-slider::-webkit-slider-thumb:hover {
+      box-shadow: 0 1px 3px var(--black3);
+    }
+    
+    .time-slider::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--blue);
+      cursor: pointer;
+      border: none;
+      box-shadow: none;
+    }
+    
+    /* Limpiando estilos - usando clases oficiales */
+    
+    /* Usar botones Figma nativos sin custom styles */
+    
+    .status-message {
+      padding: 6px 8px;
+      background: var(--grey);
+      border-radius: var(--border-radius-large);
+      border: 1px solid var(--silver);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="type type--large type--bold">AnimaGen</div>
+    </div>
+    
+    <div id="controls" class="controls">
+      <!-- Export button - solo se muestra si no hay frames -->
+      <div id="initial-view" class="flex column align-items-center justify-content-center" style="flex: 1;">
+        <button id="export-btn" class="button button--primary" onclick="exportFrames()">
+          Export Selected Frames
+        </button>
+        
+        <!-- Process steps - se muestra durante la exportación -->
+        <div id="process-steps" class="process-steps" style="display: none;">
+        <div id="step-capture" class="process-step flex align-items-center justify-content-center">
+          <span id="step-capture-icon" class="mr-xxsmall">○</span>
+          <span class="type type--small">Capture images</span>
+        </div>
+        <div id="step-export" class="process-step flex align-items-center justify-content-center">
+          <span id="step-export-icon" class="mr-xxsmall">○</span>
+          <span class="type type--small">Export to JPEG</span>
+        </div>
+        <div id="step-compress" class="process-step flex align-items-center justify-content-center">
+          <span id="step-compress-icon" class="mr-xxsmall">○</span>
+          <span class="type type--small">Compress images</span>
+        </div>
+        
+        <div class="progress-bar">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+        
+          <div class="flex justify-content-center">
+            <span id="progress-text" class="type type--small type--medium">Processing frames...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Status -->
+    <div id="status" class="type type--small status-message" style="display: none;"></div>
+    
+    <!-- Frame list -->
+    <div id="frame-list" class="frame-list" style="display: none;">
+      <div class="frame-header flex justify-content-between align-items-center">
+        <span class="type type--small type--medium" id="frame-count">0 frames</span>
+        <div class="flex">
+          <button class="button button--secondary" onclick="clearAllFrames()" style="height: 24px; padding: 4px 8px; font-size: 11px; display: flex; align-items: center; justify-content: center;">
+            Clear
+          </button>
+        </div>
+      </div>
+      
+      <div class="frames-container">
+        <div id="frames"></div>
+      </div>
+      
+      <!-- Generate Animation - Botón principal prominente -->
+      <div class="generate-section">
+        <div class="flex align-items-center mb-xxsmall">
+          <span class="type type--small type--medium mr-xxsmall">Format:</span>
+          <select id="format-select" class="select-menu" style="flex: 1;">
+            <option value="gif">GIF</option>
+            <option value="mp4">MP4</option>
+            <option value="webm">WebM</option>
+          </select>
+        </div>
+        <button class="button button--primary generate-btn" onclick="generateAnimation()">
+          Generate Animation
+        </button>
+      </div>
+    </div>
+    
+    <!-- Preview area -->
+    <div id="preview-area" class="preview-area" style="display: none;">
+      <div class="preview-header">
+        <div class="type type--medium type--bold">Preview</div>
+        <button class="button button--secondary" onclick="hidePreview()">×</button>
+      </div>
+      <div id="preview-content">
+        <!-- Preview will be shown here -->
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // State management
+    let exportedFrames = [];
+
+    function exportFrames() {
+      showProcessSteps();
+      parent.postMessage({ pluginMessage: { type: 'export-frames' } }, '*');
+    }
+
+    function showProcessSteps() {
+      // Ocultar botón y mostrar pasos
+      document.getElementById('export-btn').style.display = 'none';
+      document.getElementById('process-steps').style.display = 'block';
+      
+      // Iniciar animación de pasos
+      setTimeout(() => updateProcessStep('capture'), 100);
+      setTimeout(() => updateProcessStep('export'), 800);
+      setTimeout(() => updateProcessStep('compress'), 1500);
+    }
+
+    function updateProcessStep(step) {
+      const icon = document.getElementById(`step-${step}-icon`);
+      const progressFill = document.getElementById('progress-fill');
+      
+      // Marcar paso como activo
+      icon.textContent = '●';
+      icon.style.color = 'var(--blue)';
+      
+      // Actualizar progress bar
+      const progress = step === 'capture' ? '33%' : step === 'export' ? '66%' : '100%';
+      progressFill.style.width = progress;
+      
+      // Marcar como completado después de un momento
+      setTimeout(() => {
+        icon.textContent = '✓';
+        icon.style.color = 'var(--green)';
+      }, 600);
+    }
+
+    function hideProcessSteps() {
+      document.getElementById('process-steps').style.display = 'none';
+      
+      // Reset estados
+      const icons = ['capture', 'export', 'compress'];
+      icons.forEach(step => {
+        const icon = document.getElementById(`step-${step}-icon`);
+        icon.textContent = '○';
+        icon.style.color = '';
+      });
+      
+      document.getElementById('progress-fill').style.width = '0%';
+    }
+
+    function showStatus(message) {
+      const status = document.getElementById('status');
+      status.textContent = message;
+      status.style.display = 'block';
+    }
+
+    function hideStatus() {
+      const status = document.getElementById('status');
+      status.style.display = 'none';
+    }
+
+    function moveFrameUp(index) {
+      if (index > 0) {
+        const temp = exportedFrames[index];
+        exportedFrames[index] = exportedFrames[index - 1];
+        exportedFrames[index - 1] = temp;
+        renderFrames();
+      }
+    }
+
+    function moveFrameDown(index) {
+      if (index < exportedFrames.length - 1) {
+        const temp = exportedFrames[index];
+        exportedFrames[index] = exportedFrames[index + 1];
+        exportedFrames[index + 1] = temp;
+        renderFrames();
+      }
+    }
+
+    function updateFrameDuration(index, seconds) {
+      exportedFrames[index].duration = parseInt(seconds) * 1000; // Convert to milliseconds
+    }
+    
+    function getSecondsFromDuration(duration) {
+      return Math.round(duration / 1000); // Convert from milliseconds to seconds
+    }
+
+    function updateFrameTransition(index, transition) {
+      exportedFrames[index].transition = transition;
+    }
+
+    function deleteFrame(index) {
+      exportedFrames.splice(index, 1);
+      
+      if (exportedFrames.length === 0) {
+        document.getElementById('frame-list').style.display = 'none';
+        document.getElementById('initial-view').style.display = 'flex';
+        hideStatus();
+      } else {
+        const frameCount = document.getElementById('frame-count');
+        frameCount.textContent = `${exportedFrames.length} frame${exportedFrames.length !== 1 ? 's' : ''}`;
+        renderFrames();
+      }
+    }
+
+    function clearAllFrames() {
+      if (confirm('Clear all frames? This cannot be undone.')) {
+        exportedFrames = [];
+        document.getElementById('frame-list').style.display = 'none';
+        document.getElementById('initial-view').style.display = 'flex';
+        hideStatus();
+        hideProcessSteps();
+      }
+    }
+
+    function hidePreview() {
+      document.getElementById('preview-area').style.display = 'none';
+    }
+
+    async function generateAnimation() {
+      if (exportedFrames.length === 0) {
+        showStatus('No frames to animate');
+        return;
+      }
+
+      showStatus('Uploading frames...');
+      console.log('Starting animation generation with', exportedFrames.length, 'frames');
+      
+      try {
+        // Step 1: Upload frames to backend
+        console.log('Step 1: Uploading frames...');
+        const uploadResult = await uploadFramesToBackend();
+        console.log('Upload result:', uploadResult);
+        
+        showStatus('Generating animation...');
+        
+        // Step 2: Generate animation 
+        console.log('Step 2: Generating animation...');
+        const animationResult = await generateAnimationOnBackend(uploadResult.sessionId, uploadResult.uploadedFiles);
+        console.log('Animation result:', animationResult);
+        
+        showStatus('Animation ready!');
+        showPreviewAndDownload(animationResult);
+        
+      } catch (error) {
+        console.error('Animation generation failed:', error);
+        showStatus('Error: ' + error.message);
+        console.error('Full error details:', error);
+      }
+    }
+
+    async function uploadFramesToBackend() {
+      const formData = new FormData();
+      const sessionId = generateSessionId();
+      
+      console.log('Generated sessionId:', sessionId);
+      console.log('Converting', exportedFrames.length, 'frames to files...');
+      
+      // Convert frame bytes to files and add to form data
+      exportedFrames.forEach((frame, index) => {
+        const blob = new Blob([new Uint8Array(frame.bytes)], { type: 'image/jpeg' });
+        const file = new File([blob], `frame_${index}.jpg`, { type: 'image/jpeg' });
+        formData.append('images', file);
+        console.log(`Added frame ${index}: ${file.name} (${file.size} bytes)`);
+      });
+      
+      const uploadUrl = `https://anima-production-4d10.up.railway.app/upload?sessionId=${sessionId}`;
+      console.log('Uploading to:', uploadUrl);
+      
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        body: formData
+      });
+      
+      console.log('Upload response status:', response.status);
+      console.log('Upload response headers:', response.headers);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Upload failed with response:', errorText);
+        let error;
+        try {
+          error = JSON.parse(errorText);
+        } catch {
+          error = { error: errorText };
+        }
+        throw new Error(error.error || 'Upload failed');
+      }
+      
+      const result = await response.text();
+      console.log('Upload success response:', result);
+      
+      // Parse the response to get actual filenames
+      let uploadResponse;
+      try {
+        uploadResponse = JSON.parse(result);
+      } catch {
+        uploadResponse = { sessionId };
+      }
+      
+      return { 
+        sessionId, 
+        uploadedFiles: uploadResponse.files || [] 
+      };
+    }
+
+    async function generateAnimationOnBackend(sessionId, uploadedFiles) {
+      // Get selected format from UI
+      const formatSelect = document.getElementById('format-select');
+      const format = formatSelect.value || 'gif';
+      const endpoint = format === 'gif' ? '/export/gif' : '/export/video';
+      
+      // Use actual uploaded filenames from backend response
+      const payload = {
+        sessionId: sessionId,
+        images: uploadedFiles.map((file, index) => ({
+          filename: file.filename
+        })),
+        transitions: exportedFrames.slice(0, -1).map(frame => ({
+          type: frame.transition || 'fade',
+          duration: 0.5
+        })),
+        duration: exportedFrames.reduce((total, frame) => total + (frame.duration || 1000), 0) / 1000,
+        quality: 'standard'
+      };
+      
+      if (format !== 'gif') {
+        payload.format = format; // 'mp4' or 'webm'
+      }
+      
+      console.log('Animation payload:', JSON.stringify(payload, null, 2));
+      const exportUrl = `https://anima-production-4d10.up.railway.app${endpoint}`;
+      console.log('Exporting to:', exportUrl);
+      
+      const response = await fetch(exportUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      console.log('Export response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Export failed with response:', errorText);
+        let error;
+        try {
+          error = JSON.parse(errorText);
+        } catch {
+          error = { error: errorText };
+        }
+        throw new Error(error.error || 'Animation generation failed');
+      }
+      
+      const result = await response.text();
+      console.log('Export success response:', result);
+      
+      let parsedResult;
+      try {
+        parsedResult = JSON.parse(result);
+      } catch {
+        // Si no es JSON, asumir que es el nombre del archivo
+        parsedResult = { filename: result };
+      }
+      
+      return parsedResult;
+    }
+
+    function generateSessionId() {
+      return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    function showPreviewAndDownload(animationResult) {
+      const previewArea = document.getElementById('preview-area');
+      const previewContent = document.getElementById('preview-content');
+      
+      // El backend devuelve el filename, construir URL de descarga
+      const downloadUrl = animationResult.filename ? 
+        `https://anima-production-4d10.up.railway.app/download/${animationResult.filename}` :
+        null;
+      
+      const previewUrl = downloadUrl; // Mismo archivo para preview
+      
+      previewContent.innerHTML = `
+        <div class="flex column">
+          <div class="type type--small mb-xsmall">Animation Preview:</div>
+          <div class="preview-container mb-small">
+            ${previewUrl ? 
+              `<img src="${previewUrl}" alt="Animation preview" style="max-width: 100%; max-height: 200px; border-radius: 4px;">` :
+              '<div class="type type--small">Preview not available</div>'
+            }
+          </div>
+          <div class="flex gap-xxsmall">
+            <button class="button button--primary flex-grow" onclick="downloadAnimation('${downloadUrl || ''}', '${animationResult.filename || 'animation.gif'}')">
+              Download Animation
+            </button>
+            <button class="button button--secondary" onclick="hidePreview()">
+              Close
+            </button>
+          </div>
+          <div class="type type--small mt-xxsmall" style="color: var(--black3);">
+            ${animationResult.duration ? `Duration: ${animationResult.duration}s` : ''}
+            ${animationResult.fileSize ? ` • Size: ${formatFileSize(animationResult.fileSize)}` : ''}
+          </div>
+        </div>
+      `;
+      
+      previewArea.style.display = 'block';
+    }
+
+    function downloadAnimation(downloadUrl, filename) {
+      if (!downloadUrl) {
+        showStatus('Download URL not available');
+        return;
+      }
+      
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename || getDefaultFilename();
+      link.click();
+    }
+
+    function getDefaultFilename() {
+      const formatSelect = document.getElementById('format-select');
+      const format = formatSelect.value || 'gif';
+      return `animation.${format}`;
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function renderFrames() {
+      const framesContainer = document.getElementById('frames');
+      framesContainer.innerHTML = '';
+      
+      exportedFrames.forEach((frame, index) => {
+        const frameItem = document.createElement('div');
+        frameItem.className = 'frame-item flex align-items-center';
+        
+        // Create image from bytes
+        const blob = new Blob([new Uint8Array(frame.bytes)], { type: 'image/jpeg' });
+        const imageUrl = URL.createObjectURL(blob);
+        
+        // Shortened frame name if too long
+        const shortName = frame.name.length > 15 ? frame.name.substring(0, 15) + '...' : frame.name;
+        
+        const currentSeconds = getSecondsFromDuration(frame.duration || 1000);
+        
+        frameItem.innerHTML = `
+          <div class="flex column" style="gap: 2px;">
+            <button class="button button--secondary control-btn-small" title="Move up" onclick="moveFrameUp(${index})" ${index === 0 ? 'disabled' : ''}>↑</button>
+            <button class="button button--secondary control-btn-small" title="Move down" onclick="moveFrameDown(${index})" ${index === exportedFrames.length - 1 ? 'disabled' : ''}>↓</button>
+          </div>
+          <div class="flex align-items-center flex-grow ml-xxsmall">
+            <img src="${imageUrl}" alt="${frame.name}" class="frame-preview mr-xxsmall">
+            <span class="type type--small type--medium flex-grow">${index + 1}. ${shortName}</span>
+          </div>
+          <div class="flex align-items-center">
+            <span class="type type--small type--medium mr-xxsmall">${currentSeconds}s</span>
+            <input type="range" 
+                   class="time-slider mr-xxsmall" 
+                   min="1" 
+                   max="5" 
+                   value="${currentSeconds}" 
+                   title="Duration in seconds"
+                   oninput="updateFrameDuration(${index}, this.value); this.parentNode.querySelector('.type--small').textContent = this.value + 's'">
+            <select class="select-menu mr-xxsmall" title="Transition" onchange="updateFrameTransition(${index}, this.value)">
+              <option value="none" ${frame.transition === 'none' ? 'selected' : ''}>None</option>
+              <option value="fade" ${frame.transition === 'fade' ? 'selected' : ''}>Fade</option>
+              <option value="slide" ${frame.transition === 'slide' ? 'selected' : ''}>Slide</option>
+            </select>
+            <button class="button button--secondary-destructive control-btn-small" title="Delete frame" onclick="deleteFrame(${index})">×</button>
+          </div>
+        `;
+        
+        framesContainer.appendChild(frameItem);
+      });
+    }
+
+    function displayFrames(frames) {
+      const frameList = document.getElementById('frame-list');
+      const frameCount = document.getElementById('frame-count');
+      const initialView = document.getElementById('initial-view');
+      
+      // Initialize frames with default values
+      exportedFrames = frames.map(frame => ({
+        ...frame,
+        duration: frame.duration || 1000,
+        transition: frame.transition || 'none'
+      }));
+      
+      frameCount.textContent = `${exportedFrames.length} frame${exportedFrames.length !== 1 ? 's' : ''}`;
+      renderFrames();
+      frameList.style.display = 'block';
+      initialView.style.display = 'none'; // Ocultar vista inicial cuando hay frames
+    }
+
+    // Listen for messages from the plugin code
+    window.onmessage = (event) => {
+      const { type, frames, data } = event.data.pluginMessage;
+      
+      if (type === 'frames-exported') {
+        // Finalizar proceso y mostrar frames
+        setTimeout(() => {
+          hideProcessSteps();
+          displayFrames(frames);
+        }, 1000); // Dar tiempo a ver el último paso completado
+      }
+      
+      if (type === 'animation-ready') {
+        hideStatus();
+        showStatus(`Animation ready! ${data.frames.length} frames, ${data.totalDuration}ms total, ${data.transitionCount} transitions`);
+        console.log('Animation data:', data);
+        // TODO: Show preview or export options
+      }
+    };
+  </script>
+</body>
+</html>
